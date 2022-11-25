@@ -4,11 +4,6 @@
 
 ## Usage
 
-```
-const npmPublish = require('npm-publish');
-
-// TODO: DEMONSTRATE API
-```
 
 ```
 - name: Register Token 
@@ -18,4 +13,5 @@ const npmPublish = require('npm-publish');
     token: ${{ secrets.npm_token }}
 		username: ${{ secrets.username }}
     password: ${{ secrets.password }}
+    codeDir: ./code # 默认为代码库根目录
 ```

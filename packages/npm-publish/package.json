@@ -1,6 +1,6 @@
 {
-  "name": "npm-publish",
-  "version": "0.0.1-alpha.4",
+  "name": "@serverless-cd/npm-publish",
+  "version": "0.0.1",
   "description": "> TODO: description",
   "author": "wss-git <wssgryx@163.com>",
   "homepage": "https://github.com/serverless-cd/plugins#readme",
@@ -26,5 +26,15 @@
   },
   "bugs": {
     "url": "https://github.com/serverless-cd/plugins/issues"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "@serverless-cd/core": "^0.0.3"
+  },
+  "devDependencies": {
+    "@types/ali-oss": "^6.16.6",
+    "@types/fs-extra": "^9.0.13",
+    "@types/js-yaml": "^4.0.5",
+    "@types/lodash": "^4.14.190"
   }
 }

@@ -2,6 +2,7 @@ node_modules/
 packages/*/node_modules/
 packages/*/lib/
 packages/*/__tests__/_temp/
+packages/**/__tests__/**/.npmrc
 .DS_Store
 logs/
 coverage/

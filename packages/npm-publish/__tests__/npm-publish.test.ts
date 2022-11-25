@@ -4,8 +4,40 @@ import Engine from '@serverless-cd/engine';
 import { lodash } from '@serverless-cd/core';
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const logPrefix = path.join(__dirname, 'logs');
 const { get } = lodash;
+
+describe('orm', () => {
+  beforeAll(() => {
+    try {
+      removeDir(logPrefix);
+    } catch (err) {}
+  });
+
+  test('token', async () => {
+    const steps = [
+      {
+        uses: path.join(__dirname, '..', 'src'),
+        inputs: {
+          registry: '//registry.npmjs.org',
+          token: '${{ secrets.npm_token }}',
+          codeDir: './mock/package'
+        },
+        id: 'test',
+      },
+      // { run: 'echo success', if: '${{ steps.test.output.status === "success" }}' },
+    ];
+    const engine = new Engine({
+      cwd: path.join(__dirname, 'mock', 'packages'),
+      steps,
+      logConfig: { logPrefix },
+      inputs: { secrets: { npm_token: process.env.npm_token } },
+    });
+    await engine.start();
+  });
+});
+
 
 function removeDir(dir: string) {
   let files = fs.readdirSync(dir);
@@ -21,30 +53,3 @@ function removeDir(dir: string) {
   }
   fs.rmdirSync(dir); //如果文件夹是空的，就将自己删除掉
 }
-
-describe('orm', () => {
-  beforeAll(() => {
-    try {
-      removeDir(logPrefix);
-    } catch (err) {}
-  });
-
-  test('run方法是否执行成功', async () => {
-    const steps = [
-      {
-        uses: path.join(__dirname, '..', 'src'),
-        inputs: { name: 'xiaoming', age: 20, a: '${{env.msg}}', b: '${{secrets.msg}}' },
-        env: { msg: 'this is a env test' },
-        id: 'cdn-cache',
-      },
-      { run: 'echo "hello world"' },
-    ];
-    const engine = new Engine({
-      steps,
-      logConfig: { logPrefix },
-      inputs: { secrets: { msg: 'this is a secrets test' } },
-    });
-    const context = await engine.start();
-    expect(get(context, 'status')).toBe('success');
-  });
-});
