@@ -11,10 +11,12 @@
     "format-check": "prettier --check packages/**/*.ts",
     "test": "jest --testTimeout 10000",
     "test:cdn-cache": "jest --testTimeout 10000 packages/cdn-cache --watchAll",
-    "test:send-email": "jest --testTimeout 10000 packages/send-email --watchAll"
+    "test:send-email": "jest --testTimeout 10000 packages/send-email --watchAll",
+    "test:npm-publish": "jest --testTimeout 10000 packages/npm-publish --watchAll"
   },
   "workspaces": [
-    "packages/checkout"
+    "packages/cdn-cache",
+    "packages/npm-publish"
   ],
   "devDependencies": {
     "@serverless-cd/engine": "^0.0.10",
