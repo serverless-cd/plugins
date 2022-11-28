@@ -12,7 +12,7 @@
     "test": "jest --testTimeout 10000",
     "test:cdn-cache": "jest --testTimeout 10000 packages/cdn-cache --watchAll",
     "test:send-email": "jest --testTimeout 10000 packages/send-email --watchAll",
-    "test:npm-publish": "jest --testTimeout 10000 packages/npm-publish --watchAll"
+    "test:npm-publish": "jest --testTimeout 50000 packages/npm-publish --watchAll"
   },
   "workspaces": [
     "packages/cdn-cache",
