@@ -13,8 +13,6 @@ export interface IProps {
   codeDir?: string;
 }
 
-const NPM_CONFIG_USERCONFIG = path.join(os.tmpdir(), 'npm', '.npmrc');
-
 
 export default class Publish {
   private registry: string;
@@ -44,8 +42,9 @@ export default class Publish {
   }
 
   run(cwd: string): void {
-    const npmrcString = this.handlerNpmrc(cwd || (process.env.DOWNLOAD_CODE_DIR as string));
-    fs.outputFile(NPM_CONFIG_USERCONFIG, npmrcString);
+    const npmrcUrl = path.join(cwd || (process.env.DOWNLOAD_CODE_DIR as string), this.codeDir, '.npmrc');
+    const npmrcString = this.handlerNpmrc(npmrcUrl);
+    fs.outputFile(npmrcUrl, npmrcString);
 
     this.logger.info('run publish:');
     try {
@@ -53,19 +52,17 @@ export default class Publish {
         cwd: path.join(cwd, this.codeDir),
         env: {
           ...process.env,
-          NPM_CONFIG_USERCONFIG,
         }
       });
-      fs.removeSync(NPM_CONFIG_USERCONFIG);
+      fs.removeSync(npmrcUrl);
       this.logger.info(resStr.toString());
     } catch (err) {
-      fs.removeSync(NPM_CONFIG_USERCONFIG);
+      fs.removeSync(npmrcUrl);
       throw err;
     }
   }
 
-  private handlerNpmrc(cwd: string): string {
-    const npmrcUrl = path.join(cwd, this.codeDir, '.npmrc');
+  private handlerNpmrc(npmrcUrl: string): string {
     this.logger.info(`npmrc url: ${npmrcUrl}`);
     const npmConfig = this.readNpmrcFile(npmrcUrl);
     if (this.token) {
