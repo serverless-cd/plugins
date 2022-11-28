@@ -41,10 +41,10 @@ export default class Publish {
     this.codeDir = _.get(props, 'codeDir', '');
   }
 
-  run(cwd: string): void {
-    const npmrcUrl = path.join(cwd || (process.env.DOWNLOAD_CODE_DIR as string), this.codeDir, '.npmrc');
+  run(cwd: string = (process.env.DOWNLOAD_CODE_DIR as string)): void {
+    const npmrcUrl = path.join(cwd, this.codeDir, '.npmrc');
     const npmrcString = this.handlerNpmrc(npmrcUrl);
-    fs.outputFile(npmrcUrl, npmrcString);
+    fs.outputFileSync(npmrcUrl, npmrcString);
 
     this.logger.info('run publish:');
     try {
@@ -76,8 +76,7 @@ export default class Publish {
       npmrcString += `${key}=${npmConfig[key]}\n`;
     }
   
-    this.logger.info('npmrcString: ');
-    this.logger.info(npmrcString);
+    this.logger.debug(`npmrcString: ${npmrcString}`);
     return npmrcString;
   }
 
