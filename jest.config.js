@@ -3,9 +3,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts'],
   roots: ['<rootDir>/packages'],
   testEnvironment: 'node',
-  testMatch: [
-    '/Users/shihuali/workspace/serverless-cd/plugins/packages/ding-talk/__tests__/yaml/ding-talk-with-yaml.test.ts',
-  ],
+  testMatch: ['**/__tests__/**/*.test.ts'],
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
