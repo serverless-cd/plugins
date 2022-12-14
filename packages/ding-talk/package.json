@@ -30,6 +30,5 @@
   },
   "bugs": {
     "url": "https://github.com/serverless-cd/plugins/issues"
-  },
-  "dependencies": {}
+  }
 }
