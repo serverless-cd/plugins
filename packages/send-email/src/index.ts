@@ -11,7 +11,7 @@ export const run = async (
   logger.info('start send-email');
   logger.info(`inputs: ${JSON.stringify(inputs)}`);
   const newInputs = getInputs(inputs, context);
-  await emailService(inputs, context);
+  await emailService(newInputs, context);
   console.log(`newInputs: ${JSON.stringify(newInputs)}`);
   console.log(`context: ${JSON.stringify(context)}`);
   return { status: 'success', data: { name: get(inputs, 'name'), age: get(inputs, 'age') } };
