@@ -33,7 +33,7 @@ export default class Cache {
     const commonSuffix = [];
     const errorMessage = [];
 
-    const internal = _.get(props, 'internal') === false ? false : true; // 默认为 true
+    const internal = _.get(props, 'internal') === true ? true : false; // 默认为 false
     const region = _.get(props, 'region', '');
     this.logger.debug(`region: ${region}`);
     if (_.isEmpty(region)) {

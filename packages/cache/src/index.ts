@@ -38,7 +38,7 @@ const getCacheInputs = (inputs: Record<string, any>, context: Record<string, any
     region: _.get(newInputs, 'region', ''),
     cachePath: _.get(newInputs, 'path', ''),
     bucket: _.get(newInputs, 'ossConfig.bucket', ''),
-    internal: _.get(newInputs, 'ossConfig.internal', true),
+    internal: _.get(newInputs, 'ossConfig.internal', false),
     credentials: {
       accessKeySecret: _.get(newInputs, 'credentials.accessKeySecret', ''),
       accessKeyID: _.get(newInputs, 'credentials.accessKeyID', ''),
