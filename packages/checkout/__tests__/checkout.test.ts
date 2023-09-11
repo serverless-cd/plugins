@@ -403,10 +403,206 @@ test('checkout for appcenter', async () => {
             commit: '57f0153d92cfd1b445235a7763b2a799df1f42b2',
             message: 'Initialize by template start-springboot',
             provider: 'github',
-            ref: '+57f0153d92cfd1b445235a7763b2a799df1f42b2:refs/remotes/origin/master',
-            remote: `https://${process.env.APPCENTER_TOKEN}@github.com/zhaohang88/start-springboot-kzbp.git`,
+            ref: '+573f1291e79970d9ac26b1690d3dd71d8d97b044:refs/remotes/origin/master',
+            remote: `https://${process.env.APPCENTER_TOKEN}@github.com/rsonghuster/start-cadt-app-el6m.git`,
             token: process.env.APPCENTER_TOKEN,
-            userName: 'zhaohang88',
+            userName: 'rsonghuster',
+          },
+        },
+      },
+    },
+  });
+  const res = await engine.start();
+  expect(res.status).toBe('success');
+});
+
+test('checkout for appcenter template v3', async () => {
+  fs.removeSync(exec_dir);
+  const steps = [
+    {
+      plugin,
+    },
+  ];
+  const engine = new Engine({
+    cwd: path.join(exec_dir, 'app-center'),
+    steps,
+    logConfig: { logPrefix },
+    inputs: {
+      ctx: {
+        data: {
+          checkout: {
+            template: 'start-cadt-app',
+            parameters: {
+              "functionName": "start-cadt-app-h362-0jz81hxj",
+              "cadtJsonString": {
+                  "bucket_1691151092": {
+                      "component": "aliyun_oss_bucket@dev",
+                      "props": {
+                          "bucket": "xl-bucket-3002",
+                          "redundancy_type": "LRS",
+                          "storage_class": "Standard",
+                          "acl": "private"
+                      }
+                  },
+                  "logStore_sourcelog_1693965436": {
+                      "component": "aliyun_sls_logstore@dev",
+                      "props": {
+                          "depends_on": [
+                              "logProject_1693965436"
+                          ],
+                          "retention_forever": false,
+                          "auto_split": true,
+                          "shard_count": 2,
+                          "name": "sourcelog",
+                          "project": "xl-sls-3002",
+                          "enable_web_tracking": false,
+                          "append_meta": true,
+                          "retention_period": 3000,
+                          "max_split_shard_count": 64
+                      }
+                  },
+                  "fc_function_1693882938": {
+                      "component": "fc3@dev",
+                      "actions": {
+                          "pre-deploy": [
+                              {
+                                  "path": "./",
+                                  "run": "bash init_code.sh nodejs16 xl-fc-3002 index.js"
+                              }
+                          ]
+                      },
+                      "props": {
+                          "function": {
+                              "handler": "index.handler",
+                              "diskSize": 512,
+                              "memorySize": 512,
+                              "code": "xl-fc-3002",
+                              "functionName": "xl-fc-3002",
+                              "environmentVariables": {
+                                  "TZ": "Asia/Shanghai",
+                                  "stackName": "${resources.cadt_9U8TNE2C4Z5EO3UF.props.name}"
+                              },
+                              "runtime": "nodejs16",
+                              "cpu": 0.35,
+                              "timeout": 60
+                          },
+                          "region": "cn-huhehaote",
+                          "triggers": [
+                              {
+                                  "sourceArn": "acs:oss:cn-huhehaote:${config(\"AccountID\")}:xl-bucket-3002",
+                                  "triggerConfig": {
+                                      "filter": {
+                                          "key": {
+                                              "prefix": "src/",
+                                              "suffix": ".zip"
+                                          }
+                                      },
+                                      "events": [
+                                          "oss:ObjectCreated:PutObject",
+                                          "oss:ObjectCreated:PostObject",
+                                          "oss:ObjectCreated:CompleteMultipartUpload"
+                                      ]
+                                  },
+                                  "triggerName": "oss_t",
+                                  "qualifier": "LATEST",
+                                  "triggerType": "oss",
+                                  "invocationRole": "acs:ram::${config(\"AccountID\")}:role/aliyunosseventnotificationrole"
+                              },
+                              {
+                                  "sourceArn": "acs:log:cn-huhehaote:${config(\"AccountID\")}:project/xl-sls-3002",
+                                  "triggerConfig": {
+                                      "jobConfig": {
+                                          "triggerInterval": 60,
+                                          "maxRetryTime": 3
+                                      },
+                                      "logConfig": {
+                                          "project": "SlsProjectName",
+                                          "logstore": "joblog"
+                                      },
+                                      "sourceConfig": {
+                                          "logstore": "sourcelog"
+                                      },
+                                      "enable": true,
+                                      "functionParameter": {}
+                                  },
+                                  "triggerName": "log_t",
+                                  "qualifier": "LATEST",
+                                  "triggerType": "log",
+                                  "invocationRole": "acs:ram::${config(\"AccountID\")}:role/aliyunlogetlrole"
+                              }
+                          ]
+                      }
+                  },
+                  "logProject_1693965436": {
+                      "component": "aliyun_sls_project@dev",
+                      "props": {
+                          "name": "xl-sls-3002",
+                          "description": "xl 3002 test log project"
+                      }
+                  },
+                  "logStore_joblog_1693965436": {
+                      "component": "aliyun_sls_logstore@dev",
+                      "props": {
+                          "depends_on": [
+                              "logProject_1693965436"
+                          ],
+                          "retention_forever": false,
+                          "auto_split": true,
+                          "shard_count": 2,
+                          "name": "joblog",
+                          "project": "xl-sls-3002",
+                          "enable_web_tracking": false,
+                          "append_meta": true,
+                          "retention_period": 3000,
+                          "max_split_shard_count": 64
+                      }
+                  },
+                  "cadt_9U8TNE2C4Z5EO3UF": {
+                      "component": "ros_transformer@dev",
+                      "props": {
+                          "refs": [
+                              "${resources.bucket_1691151092.output}",
+                              "${resources.logProject_1693965436.output}",
+                              "${resources.logStore_sourcelog_1693965436.output}",
+                              "${resources.logStore_joblog_1693965436.output}"
+                          ],
+                          "name": "cadt_9U8TNE2C4Z5EO3UF",
+                          "region": "cn-huhehaote"
+                      }
+                  }
+              },
+              "serviceName": "start-cadt-app-h362-0jz81hxj"
+            }
+          },
+        },
+      },
+    },
+  });
+  const res = await engine.start();
+  expect(res.status).toBe('success');
+});
+
+test('checkout for appcenter template v2', async () => {
+  fs.removeSync(exec_dir);
+  const steps = [
+    {
+      plugin,
+    },
+  ];
+  const engine = new Engine({
+    cwd: path.join(exec_dir, 'app-center'),
+    steps,
+    logConfig: { logPrefix },
+    inputs: {
+      ctx: {
+        data: {
+          checkout: {
+            template: 'start-springboot',
+            parameters: {
+              "functionName": "springboot",
+              "region": "cn-hangzhou",
+              "serviceName": "web-framework-sbm4"
+            }
           },
         },
       },

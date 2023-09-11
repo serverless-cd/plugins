@@ -1,11 +1,12 @@
 {
   "name": "@serverless-cd/checkout",
-  "version": "0.0.11",
+  "version": "0.0.13-beta.3",
   "description": "Checkout a git repository.",
   "main": "./lib/index.js",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "beta": "npm run build && npm publish --tag beta"
   },
   "author": "",
   "license": "ISC",
@@ -13,8 +14,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@serverless-cd/core": "^0.0.15",
+    "@serverless-cd/core": "^0.0.25",
     "@serverless-cd/debug": "^4.3.4",
+    "execa": "^5.1.0",
     "flatted": "^3.2.7",
     "simple-git": "^3.17.0"
   },

@@ -28,7 +28,7 @@
     "url": "https://github.com/serverless-cd/plugins/issues"
   },
   "dependencies": {
-    "@serverless-cd/core": "^0.0.24"
+    "@serverless-cd/core": "^0.0.25"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.190"
