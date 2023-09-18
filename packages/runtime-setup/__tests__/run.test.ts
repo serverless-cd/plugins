@@ -18,7 +18,7 @@ describe('orm', () => {
         plugin: path.join(__dirname, '..', 'src'),
         id: 'my-cache',
         inputs: {
-          runtime: ['nodejs16', 'python3.9']
+          runtime: ['nodejs16', 'python3.9', 'java17']
         }
       },
       { run: `echo $PATH` },
@@ -27,7 +27,7 @@ describe('orm', () => {
     const engine = new Engine({
       cwd: __dirname,
       steps,
-      logConfig: { 
+      logConfig: {
         logPrefix,
         logLevel: 'DEBUG',
       },
