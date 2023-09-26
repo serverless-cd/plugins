@@ -12,11 +12,12 @@ const getReleaseInputs = async (inputs: Record<string, any>, context: Record<str
     logger.debug(`merged inputs: ${JSON.stringify(newInputs)}`);
 
     const Schema = Joi.object({
-        serviceName: Joi.string().required(),
+        serviceName: Joi.string().optional(),
+        functionName: Joi.string().optional(),
         aliasName: Joi.string().required(),
         regionId: Joi.string().required(),
         access: Joi.string(),
-    });
+    }).xor('serviceName', 'functionName');
 
     const { error } = Schema.validate(newInputs, { abortEarly: false, convert: true, allowUnknown: true });
     if (error) {
@@ -31,6 +32,7 @@ const getReleaseInputs = async (inputs: Record<string, any>, context: Record<str
 
     return {
         serviceName: _.get(newInputs, 'serviceName', ''),
+        functionName: _.get(newInputs, 'functionName', ''),
         aliasName: _.get(newInputs, 'aliasName', ''),
         regionId: _.get(newInputs, 'regionId', ''),
         access: _.get(newInputs, 'access', 'default'),

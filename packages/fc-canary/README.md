@@ -5,11 +5,25 @@
 
 ## 使用方法
 
+#### fc2.0的使用
+
 ```yaml
 
 - plugin: @serverless-cd/fc-canary
   inputs:
     serviceName: web-framework-kzbp
+    aliasName: prod
+    regionId: cn-hangzhou
+    canaryPercent: 50
+```
+
+#### fc3.0的使用
+
+```yaml
+
+- plugin: @serverless-cd/fc-canary
+  inputs:
+    functionName: web-framework-kzbp
     aliasName: prod
     regionId: cn-hangzhou
     canaryPercent: 50

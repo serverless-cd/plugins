@@ -4,10 +4,22 @@
 
 ## 使用方法
 
+#### fc2.0的使用
+
 ```yaml
 - plugin: @serverless-cd/fc-release
   inputs:
     serviceName: web-framework-kzbp
+    aliasName: prod
+    regionId: cn-hangzhou
+```
+
+#### fc3.0的使用
+
+```yaml
+- plugin: @serverless-cd/fc-release
+  inputs:
+    functionName: web-framework-kzbp
     aliasName: prod
     regionId: cn-hangzhou
 ```

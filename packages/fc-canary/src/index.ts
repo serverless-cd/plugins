@@ -12,12 +12,13 @@ const getCanaryInputs = async (inputs: Record<string, any>, context: Record<stri
     logger.debug(`merged inputs: ${JSON.stringify(newInputs)}`);
 
     const Schema = Joi.object({
-        serviceName: Joi.string().required(),
+        serviceName: Joi.string().optional(),
+        functionName: Joi.string().optional(),
         aliasName: Joi.string().required(),
         regionId: Joi.string().required(),
         canaryPercent: Joi.number().max(100).min(0).required(),
         access: Joi.string(),
-    });
+    }).xor('serviceName', 'functionName');
 
     const {error} = Schema.validate(newInputs, {abortEarly: false, convert: true, allowUnknown: true});
     if (error) {
@@ -26,12 +27,9 @@ const getCanaryInputs = async (inputs: Record<string, any>, context: Record<stri
         return {error};
     }
 
-
-    const workerRunRegion = _.get(context, 'inputs.workerRunConfig.region');
-    const region = _.get(newInputs, 'region', workerRunRegion);
-
     return {
         serviceName: _.get(newInputs, 'serviceName', ''),
+        functionName: _.get(newInputs, 'functionName', ''),
         aliasName: _.get(newInputs, 'aliasName', ''),
         regionId: _.get(newInputs, 'regionId', ''),
         canaryPercent: _.get(newInputs, 'canaryPercent', 10),

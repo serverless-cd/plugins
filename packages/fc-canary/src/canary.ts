@@ -1,10 +1,11 @@
-import {Logger} from "@serverless-cd/core";
+import {Logger, lodash as _} from "@serverless-cd/core";
 import fs from "fs";
 import {spawnSync} from 'child_process';
 import path from "path";
 
 export interface IProps {
     serviceName: string;
+    functionName: string;
     aliasName: string;
     regionId: string;
     canaryPercent: number;
@@ -14,9 +15,11 @@ export interface IProps {
 
 
 export default class FcCanary {
-    static readonly bashScriptPath = path.resolve(__dirname, "../script/fc-canary.sh");
+    static readonly fcBashScriptPath = path.resolve(__dirname, "../script/fc-canary.sh");
+    static readonly fc3BashScriptPath = path.resolve(__dirname, "../script/fc3-canary.sh");
 
     private readonly serviceName: string;
+    private readonly functionName: string;
     private readonly aliasName: string;
     private readonly regionId: string;
     private readonly canaryPercent: number;
@@ -29,6 +32,7 @@ export default class FcCanary {
     constructor(props: IProps, logger: Logger) {
         this.logger = (logger || console) as Logger;
         this.serviceName = props.serviceName
+        this.functionName = props.functionName
         this.aliasName = props.aliasName
         this.regionId = props.regionId
         this.canaryPercent = props.canaryPercent
@@ -37,7 +41,15 @@ export default class FcCanary {
     }
 
     run(): { error?: Error } {
-        const bashFile = fs.readFileSync(FcCanary.bashScriptPath, 'utf-8')
+        let bashFilePath = ""
+        if (_.isEmpty(this.functionName)){
+            // fc
+            bashFilePath = FcCanary.fcBashScriptPath
+        } else {
+            // fc3
+            bashFilePath = FcCanary.fc3BashScriptPath
+        }
+        const bashFile = fs.readFileSync(bashFilePath, 'utf-8')
         let args = ['-c', bashFile]
         if (this.debug) {
             args = ['-cx', bashFile]
@@ -52,6 +64,7 @@ export default class FcCanary {
                     region_id: this.regionId,
                     alias_name: this.aliasName,
                     service_name: this.serviceName,
+                    function_name: this.functionName,
                     canary_percent: this.canaryPercent.toString(),
                     access: this.access,
                 }

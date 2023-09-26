@@ -40,4 +40,3 @@ if [[ ${return_code} -ne 0 ]]; then
 fi
 echo "service[${service_name}]/alias[${alias_name}] updated. MainVersion: ${current_version_id}, CanaryVersion: ${canary_version_id}, Percent: ${canary_percent}%"
 s cli fc alias get --region ${region_id} --access "${access}" --service-name="${service_name}" --alias-name "${alias_name}"
-exit 0
