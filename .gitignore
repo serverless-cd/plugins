@@ -8,3 +8,4 @@ coverage/
 *.log
 .env
 ossutil_output
+.s
