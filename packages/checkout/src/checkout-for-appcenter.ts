@@ -50,7 +50,7 @@ const sInit = async (config: ITemplateConfig) => {
     throw new Error(`The execDir[${execDir}] does not exist`);
   }
 
-  const cmd = `s init ${template} --parameters '${JSON.stringify(parameters)}' --project ${template} -d ${execDir} --no-reserve-comments`;
+  const cmd = `s init ${template} --parameters '${JSON.stringify(parameters)}' --project ${template} -d ${execDir}`;
   logger.info(`Execute command: ${cmd} \n\n`);
 
   const subprocess = execa(cmd, {
