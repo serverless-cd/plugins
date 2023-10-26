@@ -592,7 +592,7 @@ test('checkout for appcenter template v2', async () => {
   const engine = new Engine({
     cwd: path.join(exec_dir, 'app-center'),
     steps,
-    logConfig: { logPrefix },
+    logConfig: { logPrefix, logLevel: 'DEBUG' },
     inputs: {
       ctx: {
         data: {

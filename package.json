@@ -17,10 +17,15 @@
     "test:setup-runtime": "jest --testTimeout 500000 packages/setup-runtime --watchAll",
     "test:s-setup": "jest --testTimeout 500000 packages/s-setup --watchAll",
     "test:send-email": "jest --testTimeout 10000 packages/send-email --watchAll",
-    "test:npm-publish": "jest --testTimeout 50000 packages/npm-publish --watchAll"
+    "test:npm-publish": "jest --testTimeout 50000 packages/npm-publish --watchAll",
+    "test:s-deploy": "jest --testTimeout 500000 packages/s-deploy --watchAll"
   },
   "workspaces": [
-    "packages/checkout"
+    "packages/checkout",
+    "packages/setup-runtime",
+    "packages/s-deploy",
+    "packages/fc-canary",
+    "packages/s-release"
   ],
   "devDependencies": {
     "@serverless-cd/engine": "^0.0.35",
