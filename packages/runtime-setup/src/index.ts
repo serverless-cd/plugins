@@ -1,5 +1,5 @@
 import { lodash as _, Logger, getInputs } from '@serverless-cd/core';
-import setupRuntime, { IProps } from './setup-runtime';
+import runtimeSetup, { IProps } from './runtime-setup';
 
 const getCacheInputs = async (inputs: Record<string, any>, context: Record<string, any>, logger: Logger): Promise<IProps> => {
   logger.debug(`context: ${JSON.stringify(context)}`);
@@ -11,10 +11,10 @@ const getCacheInputs = async (inputs: Record<string, any>, context: Record<strin
 }
 
 export const run = async (inputs: Record<string, any>, context: Record<string, any>, logger: Logger) => {
-  logger.info('start @serverless-cd/setup-runtime run');
+  logger.info('start @serverless-cd/runtime-setup run');
   const props = await getCacheInputs(inputs, context, logger);
-  await setupRuntime(props, logger);
-  logger.info('Run @serverless-cd/setup-runtime end');
+  await runtimeSetup(props, logger);
+  logger.info('Run @serverless-cd/runtime-setup end');
 };
 
-export default setupRuntime;
+export default runtimeSetup;

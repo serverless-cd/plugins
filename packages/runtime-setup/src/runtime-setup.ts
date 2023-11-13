@@ -32,7 +32,7 @@ export interface IProps {
 }
 
 
-export default function setupRuntime (props: IProps, logger: Logger) {
+export default function runtimeSetup (props: IProps, logger: Logger) {
   const runtimes = _.get(props, 'runtime', [])
   if (!_.isArray(runtimes)) {
     logger.error('Runtime does not meet expectations, skipping processing');
