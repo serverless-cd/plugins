@@ -14,7 +14,7 @@
     "test:ding": "jest --testTimeout 10000 packages/ding-talk --watchAll",
     "test:cdn-cache": "jest --testTimeout 10000 packages/cdn-cache --watchAll",
     "test:cache": "jest --testTimeout 500000 packages/cache --watchAll",
-    "test:setup-runtime": "jest --testTimeout 500000 packages/setup-runtime --watchAll",
+    "test:runtime-setup": "jest --testTimeout 500000 packages/runtime-setup --watchAll",
     "test:s-setup": "jest --testTimeout 500000 packages/s-setup --watchAll",
     "test:send-email": "jest --testTimeout 10000 packages/send-email --watchAll",
     "test:npm-publish": "jest --testTimeout 50000 packages/npm-publish --watchAll",
@@ -22,7 +22,7 @@
   },
   "workspaces": [
     "packages/checkout",
-    "packages/setup-runtime",
+    "packages/runtime-setup",
     "packages/s-deploy",
     "packages/fc-canary",
     "packages/s-release"
