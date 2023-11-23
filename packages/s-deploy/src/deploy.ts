@@ -53,11 +53,11 @@ class Deploy {
         cwd: workspace,
       });
       subprocess.stdout?.pipe(process.stdout);
+      subprocess.stderr?.pipe(process.stderr);
       await subprocess;
     } catch(e) {
       throw new Error(_.get(e, 'originalMessage'));
     }
-    
   }
 }
 
