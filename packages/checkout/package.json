@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "beta": "npm run build && npm publish --tag beta"
+    "beta": "npm run build && npm publish --tag beta",
+    "postpublish": "sync-npm-mirror @serverless-cd/checkout"
   },
   "author": "",
   "license": "ISC",

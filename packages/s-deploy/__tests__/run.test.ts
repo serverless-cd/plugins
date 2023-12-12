@@ -12,12 +12,19 @@ test('use template', async () => {
       plugin,
       inputs: {
         resource: 'helloworld',
+        deployArgs: []
+      },
+    },
+    {
+      plugin,
+      inputs: {
+        resource: 'helloworld',
         deployArgs: ['function', '--type code']
       },
     },
   ];
   const engine = new Engine({
-    cwd: path.join(mock_dir, 'start-fc-http-nodejs14'),
+    cwd: path.join(mock_dir, 'start-fc'),
     steps,
     logConfig: { logPrefix, logLevel: 'DEBUG' },
     inputs: {
