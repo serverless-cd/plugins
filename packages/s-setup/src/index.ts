@@ -16,22 +16,30 @@ async function getCredential(inputs: any, context: any): Promise<ICredentials> {
   return await getCredentials(inputs, context) as ICredentials;
 }
 
-const getCoreInputs = async (inputs: Record<string, any>, context: Record<string, any>, logger: Logger): Promise<IProps> => {
+const getPluginInputs = async (inputs: Record<string, any>, context: Record<string, any>, logger: Logger): Promise<IProps> => {
   logger.debug(`context: ${JSON.stringify(context)}`);
-  logger.debug(`inputs: ${JSON.stringify(inputs)}`);
-  const newInputs = getInputs(inputs, context) as Record<string, any>;
-  logger.debug(`newInputs: ${JSON.stringify(newInputs)}`);
+  logger.debug(`original inputs: ${JSON.stringify(inputs)}`);
+  const newInputs = _.assign(getInputs(inputs, context) as Record<string, any>, {
+    projectName: _.get(context, 'inputs.context.data.projectName'),
+    envName: _.get(context, 'inputs.context.data.envName'),
+    infraStackName: _.get(context, 'inputs.context.data.infraStackName')
+  });
+  logger.debug(`merged inputs: ${JSON.stringify(newInputs)}`);
   const credentials = await getCredential(newInputs, context) as ICredentials;
   
   return {
     alias: _.get(inputs, 'alias', 'default'),
-    credentials
+    credentials,
+    projectName: _.get(newInputs, 'projectName'),
+    envName: _.get(newInputs, 'envName'),
+    infraStackName: _.get(newInputs, 'infraStackName'),
+    workspace: _.get(context, 'cwd'),
   };
 }
 
 export const run = async (inputs: Record<string, any>, context: Record<string, any>, logger: Logger) => {
   logger.info('start @serverless-cd/s-setup run');
-  const props = await getCoreInputs(inputs, context, logger);
+  const props = await getPluginInputs(inputs, context, logger);
   const cwd = _.get(context, 'cwd', '');
   const lsRes = spawnSync(`ls -al ${cwd}`, { shell: true, encoding: 'utf8' });
   logger.debug(`ls -al ${cwd} res: ${lsRes.stdout}`);

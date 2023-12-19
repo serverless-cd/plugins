@@ -1,6 +1,7 @@
 import { lodash as _, Logger, fs } from '@serverless-cd/core';
-import execa from 'execa';
+import execa, { command } from 'execa';
 import path from 'path'; 
+import yaml from 'js-yaml';
 
 export interface IProps {
   resource?: string; // Specify a resource in s.yaml. Use the command to s xxx deploy.
@@ -9,6 +10,7 @@ export interface IProps {
   envName?: string; // Specify envionment. Use the command to s deploy --env
   debugMode?: boolean; // Use the command to s deploy --debug
   workspace: string // worksapce dir.
+  infraStackName?: string; // infra stack name
 }
 
 class Deploy {
@@ -20,31 +22,8 @@ class Deploy {
   }
 
   async run() {
-    const { resource, deployFile, deployArgs, envName, debugMode, workspace } = this.props;
-   
-    const cmd = resource ? `s ${resource} deploy` : 's deploy';
-    let args = ['--use-local', '--assume-yes', '--skip-push'];
-
-    if (envName) {
-      args.push(`--env ${envName}`);
-    }
-  
-    if (deployFile) {
-      const manifest = path.resolve(workspace, deployFile);
-      if (!fs.existsSync(manifest)) {
-        throw new Error(`The deploy manifest [${manifest}] does not exist`)
-      }
-      args.push(`-t ${deployFile}`)
-    }
-
-    if (debugMode) {
-      args.push('--debug');
-    }
-
-    if (Array.isArray(deployArgs)) {
-      args = args.concat(deployArgs)
-    }
-  
+    const { cmd, args } = await this.generateDeployCommand();  
+    const { workspace } = this.props;
     this.logger.info(`Execute command: ${cmd} ${args.join(' ')}\n\n`)
     try {
       const subprocess = execa(cmd, args, {
@@ -58,6 +37,48 @@ class Deploy {
     } catch(e) {
       throw new Error(_.get(e, 'originalMessage'));
     }
+  }
+
+  async generateDeployCommand() {
+    const { resource, deployFile, deployArgs, envName, infraStackName, debugMode, workspace } = this.props;
+   
+    const cmd = resource ? `s ${resource} deploy` : 's deploy';
+    let args = ['--use-local', '--assume-yes', '--skip-push'];
+    
+    const isDevsV3 = (fileName: string) => {
+      const syaml = yaml.load(fs.readFileSync(fileName, 'utf8'));
+      return _.get(syaml, 'edition') === '3.0.0';
+    }
+
+    let manifest
+    if (deployFile) {
+      manifest = path.resolve(workspace, deployFile);
+      if (!fs.existsSync(manifest)) {
+        throw new Error(`The deploy manifest [${manifest}] does not exist`)
+      }
+      args.push(`-t ${deployFile}`)
+    } else {
+      manifest = path.resolve(workspace, 's.yaml');
+    }
+
+    this.logger.info(`Deploy manifest: ${manifest}`)
+
+    if (isDevsV3(manifest) && envName) {
+      this.logger.info("use sererless-devs v3 envionment")
+      args.push(`--env ${envName}`);
+    } else if(envName && infraStackName) {
+      args.push(`--env ${infraStackName}`);
+    }
+
+    if (debugMode) {
+      args.push('--debug');
+    }
+
+    if (Array.isArray(deployArgs)) {
+      args = args.concat(deployArgs)
+    }
+
+    return { cmd, args };
   }
 }
 

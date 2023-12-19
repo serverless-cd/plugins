@@ -7,13 +7,15 @@ const getPluginInputs = async (inputs: Record<string, any>, context: Record<stri
   logger.debug(`original inputs: ${JSON.stringify(inputs)}`);
   const newInputs = _.assign(getInputs(inputs, context) as Record<string, any>, {
     deployFile: _.get(context, 'inputs.context.data.deployFile'),
-    envName: _.get(context, 'inputs.context.data.envDeploymentName')
+    envName: _.get(context, 'inputs.context.data.envName'),
+    infraStackName: _.get(context, 'inputs.context.data.infraStackName')
   });
   logger.debug(`merged inputs: ${JSON.stringify(newInputs)}`);
   return {
     deployFile: _.get(newInputs, 'deployFile'),
     deployArgs: _.get(newInputs, 'deployArgs'),
     envName: _.get(newInputs, 'envName'),
+    infraStackName: _.get(newInputs, 'infraStackName'),
     resource: _.get(newInputs, 'resource'),
     debugMode: _.get(newInputs, 'debugMode') ||  _.get(context, 'inputs.ctx.data.runnerConfig.debugMode'),
     workspace: _.get(context, 'cwd'),

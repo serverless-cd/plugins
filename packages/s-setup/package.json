@@ -1,7 +1,7 @@
 {
   "name": "@serverless-cd/s-setup",
-  "version": "0.0.5-beta.2",
-  "description": "> TODO: description",
+  "version": "0.0.7",
+  "description": "install serverless devs and configuring default access",
   "author": "wss-git <wssgryx@163.com>",
   "homepage": "https://github.com/serverless-cd/plugins#readme",
   "license": "ISC",
@@ -19,7 +19,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "postpublish": "sync-npm-mirror @serverless-cd/s-setup"
   },
   "publishConfig": {
     "access": "public"

@@ -1,6 +1,6 @@
 {
   "name": "@serverless-cd/s-deploy",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "use serverless devs for deployment",
   "author": "lowkeyrd <darren.lowkeyrd@gmail.com>",
   "homepage": "https://github.com/serverless-cd/plugins#readme",
@@ -19,7 +19,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "postpublish": "sync-npm-mirror @serverless-cd/s-deploy"
   },
   "publishConfig": {
     "access": "public"
@@ -29,6 +30,7 @@
   },
   "dependencies": {
     "@serverless-cd/core": "^0.0.25",
-    "execa": "^5.1.0"
+    "execa": "^5.1.0",
+    "js-yaml": "^4.1.0"
   }
 }

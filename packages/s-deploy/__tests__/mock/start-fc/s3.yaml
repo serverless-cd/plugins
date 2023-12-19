@@ -1,0 +1,20 @@
+edition: 3.0.0
+name: hello-world-app
+access: fc_cn
+vars:
+  region: cn-hangzhou
+  service:
+    name: hello-world-service
+    description: hello world by serverless devs
+resources:
+  helloworld:
+    component: fc3
+    props:
+      region: ${vars.region}
+      description: hello world by serverless devs
+      runtime: nodejs14
+      handler: index.handler
+      memorySize: 128
+      timeout: 60
+      functionName: hello-world-service$start-fc-http-nodejs14
+      code: ./code

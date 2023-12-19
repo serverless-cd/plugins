@@ -12,7 +12,7 @@ describe('orm', () => {
     } catch (err) { }
   });
 
-  test('run', async () => {
+  test('runWithoutAuthentication', async () => {
     const steps = [
       {
         plugin: path.join(__dirname, '..', 'src'),
@@ -30,12 +30,57 @@ describe('orm', () => {
     const engine = new Engine({
       cwd: __dirname,
       steps,
-      logConfig: { 
+      inputs: {
+        context: {
+          data: {
+            projectName: 'demo',
+            envName: 'test',
+          },
+        },
+      },
+      logConfig: {
         logPrefix,
         logLevel: 'DEBUG',
       },
     });
-    await engine.start();
+    const res = await engine.start();
+    expect(res.status).toBe('success');
+  });
+
+  test('runWithAuthentication', async () => {
+    const steps = [
+      {
+        plugin: path.join(__dirname, '..', 'src'),
+        id: 'my-cache',
+        inputs: {
+          alias: 'test',
+          credentials: {
+            accessKeySecret: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            accessKeyId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            accountId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+          },
+        }
+      }
+    ];
+    const engine = new Engine({
+      cwd: __dirname,
+      steps,
+      inputs: {
+        context: {
+          data: {
+            projectName: 'demo',
+            envName: 'testWithAuth',
+            infraStackName: 'test',
+          },
+        },
+      },
+      logConfig: {
+        logPrefix,
+        logLevel: 'DEBUG',
+      },
+    });
+    const res = await engine.start();
+    expect(res.status).toBe('failure');
   });
 });
 
