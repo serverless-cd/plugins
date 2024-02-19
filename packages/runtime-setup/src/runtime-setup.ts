@@ -94,7 +94,7 @@ export default function runtimeSetup (props: IProps, logger: Logger) {
       const extraEnv = extraEnvConfig[runtime]
       logger.debug(`Runtime ${runtime} extra env: ${extraEnv}`);
       if (extraEnv) {
-        for (const key in Object.keys(extraEnv)) {
+        for (const key of Object.keys(extraEnv)) {
           process.env[key] = extraEnv[key];
         }
       }
