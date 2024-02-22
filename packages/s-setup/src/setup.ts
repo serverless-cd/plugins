@@ -71,12 +71,12 @@ const initAccess = (props: IProps, logger: Logger) => {
 }
 
 const initEnvironment = (props: IProps, logger: Logger) => {
-  const { workspace, envName, projectName, infraStackName } = props;
+  const { workspace, envName, infraStackName } = props;
   const alias = _.get(props, 'alias', 'default');
   if (!envName) {
     return;
   }
-  let cmd = `s env init --name ${envName} --project ${projectName} --access ${alias}`;
+  let cmd = `s env init --name ${envName} --access ${alias}`;
   if (infraStackName) {
     cmd += ` --infra-stack-name ${infraStackName}`;
   }
