@@ -1,6 +1,6 @@
 {
   "name": "@serverless-cd/s-setup",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "install serverless devs and configuring default access",
   "author": "wss-git <wssgryx@163.com>",
   "homepage": "https://github.com/serverless-cd/plugins#readme",
