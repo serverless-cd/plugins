@@ -1,6 +1,6 @@
 {
   "name": "@serverless-cd/s-deploy",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "use serverless devs for deployment",
   "author": "lowkeyrd <darren.lowkeyrd@gmail.com>",
   "homepage": "https://github.com/serverless-cd/plugins#readme",

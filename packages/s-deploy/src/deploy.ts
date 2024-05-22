@@ -64,7 +64,7 @@ class Deploy {
     this.logger.info(`Deploy manifest: ${manifest}`)
 
     if (isDevsV3(manifest) && envName) {
-      this.logger.info("use sererless-devs v3 envionment")
+      this.logger.info("use sererless-devs v3 multi-environment")
       args.push(`--env ${envName}`);
     } else if(envName && infraStackName) {
       args.push(`--env ${infraStackName}`);
