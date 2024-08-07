@@ -20,6 +20,7 @@ interface IGitConfig {
   branch?: string;
   commit?: string;
   logger?: Logger;
+  parameters?: string;
 }
 
 interface ITemplateConfig {
@@ -28,6 +29,16 @@ interface ITemplateConfig {
   parameters?: string;
   logger?: Logger;
 }
+
+type Variables = {
+  value: string;
+  sensitive?: boolean;
+  encrypted?: boolean;
+};
+
+type Parameters = {
+  [key: string]: Variables;
+};
 
 const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig) => {
   const logger = config.logger || console;
@@ -50,7 +61,9 @@ const sInit = async (config: ITemplateConfig) => {
     throw new Error(`The execDir[${execDir}] does not exist`);
   }
 
-  const cmd = `s init ${template} --parameters '${JSON.stringify(parameters)}' -d ${execDir} --no-overwrite --access default`;
+  let nonSecretParameters = await handleSecretParams(JSON.stringify(parameters), execDir, logger);
+
+  const cmd = `s init ${template} --parameters '${JSON.stringify(nonSecretParameters)}' -d ${execDir} --no-overwrite --access default`;
   logger.info(`Execute command: ${cmd} \n\n`);
 
   const subprocess = execa(cmd, {
@@ -64,9 +77,52 @@ const sInit = async (config: ITemplateConfig) => {
   return { template, parameters }
 }
 
+const handleSecretParams = async (inputParams: any, execDir: string, logger: any) => {
+  try {
+    // parsing inputParams string to Parameters object
+    let parameters: Parameters = JSON.parse(inputParams);
+    let outputParams = {} as { [key: string]: any };
+
+    // filter sensitive parameters
+    for (const key in parameters) {
+      if (parameters.hasOwnProperty(key)) {
+        const variable = parameters[key];
+        if (variable.sensitive) {
+          // s secret add the secret parameter
+          await sSecretAdd(key, variable.value, execDir, logger);
+          continue
+        }
+        // recording the non-sensitive parameters
+        outputParams[key] = variable.value;
+      }
+    }
+    return outputParams;
+  } catch (error) {
+    console.error('Invalid variable json format:', error);
+  }
+}
+
+const sSecretAdd = async (secretKey: string, secretValue: string, execDir: string, logger: Logger) => {
+  const cmd = `s secret add --key ${secretKey} --value ${secretValue} --force`;
+  logger.info(`Execute command: s secret add ${secretKey}`);
+
+  const subprocess = execa(cmd, {
+    shell: true,
+    stripFinalNewline: false,
+    cwd: path.dirname(execDir),
+  });
+  subprocess.stdout?.pipe(process.stdout);
+  await subprocess;
+
+}
+
 const gitFetch = async (config: IGitConfig) => {
   const logger = config.logger || console;
-  const { execDir, remote, token, branch, commit, provider, ref } = config;
+  const { execDir, remote, token, branch, commit, provider, ref , parameters} = config;
+  // s secret add the sensitive parameters
+  if (parameters) {
+    await handleSecretParams(JSON.stringify(parameters), execDir, logger);
+  }
   if (!fs.existsSync(execDir)) {
     throw new Error(`The execDir[${execDir}] does not exist`);
   }

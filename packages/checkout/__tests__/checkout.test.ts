@@ -611,3 +611,33 @@ test('checkout for appcenter template v2', async () => {
   const res = await engine.start();
   expect(res.status).toBe('success');
 });
+
+test('checkout for appcenter template with secret parameters', async () => {
+  fs.removeSync(exec_dir);
+  const steps = [
+    {
+      plugin,
+    },
+  ];
+  const engine = new Engine({
+    cwd: path.join(exec_dir, 'app-center'),
+    steps,
+    logConfig: { logPrefix, logLevel: 'DEBUG' },
+    inputs: {
+      ctx: {
+        data: {
+          checkout: {
+            template: 'start-springboot',
+            parameters: {
+              "functionName": {"value": "springboot", "sensitive": false, "encrypted": false},
+              "region": {"value": "cn-hangzhou"},
+              "serviceName": {"value": "web-framework-sbm4", "sensitive": true, "encrypted": false}
+            }
+          },
+        },
+      },
+    },
+  });
+  const res = await engine.start();
+  expect(res.status).toBe('success');
+});
