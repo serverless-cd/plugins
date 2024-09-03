@@ -29,7 +29,13 @@ interface ITemplateConfig {
   logger?: Logger;
 }
 
-const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig) => {
+interface ITemplateSourceConfig {
+  execDir: string;
+  templateUrl: string;
+  logger?: Logger;
+}
+
+const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig | ITemplateSourceConfig) => {
   const logger = config.logger || console;
   const { execDir } = config;
   debug(`config: ${stringify(config)}`);
@@ -41,7 +47,56 @@ const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig) => {
   if('template' in config ) {
     return await sInit(config);
   }
+
+  if('templateUrl' in config) {
+    return await downloadTemplateSource(config);
+  }
 };
+
+const downloadTemplateSource = async (config: ITemplateSourceConfig) => {
+  const logger = config.logger || console;
+  const { execDir, templateUrl } = config;
+  if (!fs.existsSync(execDir)) {
+    throw new Error(`The execDir[${execDir}] does not exist`);
+  }
+
+  const downloadScript = `
+#!/bin/bash
+set -ex
+
+workspace_dir=${execDir}
+url=${templateUrl}
+temp_zip="temp.zip"
+temp_dir="temp_dir"
+
+mkdir -p "$workspace_dir"
+
+curl -L "$url" -o "$temp_zip"
+
+mkdir -p "$temp_dir"
+unzip "$temp_zip" -d "$temp_dir"
+
+src_path=$(find "$temp_dir" -type d -name "src" | head -n 1)
+
+if [ -d "$src_path" ]; then
+    cp -r "$src_path/"* "$workspace_dir/"
+else
+    echo "not found src"
+fi
+
+rm -rf "$temp_zip" "$temp_dir"
+  `
+
+  const subprocess = execa(downloadScript, {
+    shell: true,
+    stripFinalNewline: false,
+    // cwd: path.dirname(execDir),
+  });
+  subprocess.stdout?.pipe(process.stdout);
+  await subprocess;
+
+  return { templateUrl }
+}
 
 const sInit = async (config: ITemplateConfig) => {
   const logger = config.logger || console;
