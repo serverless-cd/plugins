@@ -21,8 +21,8 @@ export async function run(
   const newInputs = getInputs(inputs, context);
   debug(`getInputs: ${stringify(newInputs)}`);
 
-  const ctx = get(context, 'inputs.ctx.data.checkout');
-  debug(`ctx.data.checkout: ${stringify(ctx)}`);
+  const ctx = get(context, 'inputs.ctx.data.checkout') || get(newInputs, 'ctx.data.checkout');
+  debug(`appcenter checkout: ${stringify(ctx)}`);
   const newConfig = assign(
     {},
     {
