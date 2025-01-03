@@ -60,6 +60,14 @@ const downloadTemplateSource = async (config: ITemplateSourceConfig) => {
     throw new Error(`The execDir[${execDir}] does not exist`);
   }
 
+  let downloadCmd = `curl -L "$url" -o "$temp_zip"`
+
+  // when DEVS_MOCK_ENV is true, template download times will not be counted up
+  if (process.env.DEVS_MOCK_ENV == 'true') {
+    logger.info('DEVS_MOCK_ENV is true, template download times will not be counted up')
+    downloadCmd = `curl -L "$url" -o "$temp_zip" -H "devs_mock_env: true"`
+  }
+
   const downloadScript = `
 #!/bin/bash
 set -ex
@@ -71,7 +79,7 @@ temp_dir="temp_dir"
 
 mkdir -p "$workspace_dir"
 
-curl -L "$url" -o "$temp_zip"
+${downloadCmd}
 
 mkdir -p "$temp_dir"
 unzip "$temp_zip" -d "$temp_dir"
