@@ -103,7 +103,7 @@ export default class Cache {
     this.logger.debug(`ossutild du response.status: ${status}; stdout:\n`);
     this.logger.debug(stdout);
     if (status === null || status !== 0) {
-      this.error = new Error(`ossutil du error`);
+      this.error = new Error(`ossutil du error: ${stdout}`);
       return { 'cache-hit': false, error: this.error };
     }
 
@@ -121,7 +121,7 @@ export default class Cache {
         return { 'cache-hit': true };
       } catch (ex) {
         this.logger.debug(`ossutild cp erorr: ${ex}`);
-        this.logger.error('Download cache failed');
+        this.logger.error(`Download cache failed, ${ex}`);
         this.error = new Error('Download cache failed');
       }
     }
