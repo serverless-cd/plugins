@@ -9,6 +9,7 @@ export interface IProps {
   credentials: ICredentials;
   internal?: boolean;
   cwd?: string;
+  prefix?: string; // 新增的prefix属性
 }
 
 export interface ICredentials {
@@ -19,8 +20,6 @@ export interface ICredentials {
 }
 
 export default class Cache {
-  // -j 多文件操作时的并发任务数，默认值为3，取值范围为1~10000
-  // --bigfile-threshold  开启大文件断点续传的文件大小阈值，单位为Byte，默认值为100 MByte，取值范围为 0~9223372036854775807。
   static readonly cpCommonParams = ['-r', '-f', '-j 50', '--bigfile-threshold 9223372036854775800'];
   private logger: Logger;
   private cachePath: string;
@@ -35,7 +34,7 @@ export default class Cache {
     const commonSuffix = [];
     const errorMessage = [];
 
-    const internal = _.get(props, 'internal') === true ? true : false; // 默认为 false
+    const internal = _.get(props, 'internal') === true;
     const region = _.get(props, 'region', '');
     this.logger.debug(`region: ${region}`);
     if (_.isEmpty(region)) {
@@ -52,10 +51,10 @@ export default class Cache {
     if (securityToken) {
       commonSuffix.push(`-t ${securityToken}`);
     }
-    
+
     let bucket = _.get(props, 'bucket', '');
     if (_.isEmpty(bucket)) {
-      logger.debug('Bucket does not meet expectations, need to create');
+      this.logger.debug('Bucket does not meet expectations, need to create');
       bucket = `serverless-cd-${region}-cache-${accountId}`;
       this.createBucketName = bucket;
     }
@@ -63,7 +62,8 @@ export default class Cache {
     if (_.isEmpty(objectKey)) {
       errorMessage.push('Key does not meet expectations');
     }
-    this.cloudUrl = `oss://${bucket}/${objectKey}${_.endsWith(objectKey, '/') ? '' : '/'}`;
+    const prefix = _.get(props, 'prefix', 'cache-home');
+    this.cloudUrl = this.getCloudUrl(bucket, objectKey, prefix);
     this.logger.debug(`cloudUrl: ${this.cloudUrl}`);
     this.cachePath = _.get(props, 'cachePath', '');
     this.logger.debug(`cachePath: ${this.cachePath}`);
@@ -74,11 +74,26 @@ export default class Cache {
 
     if (!_.isEmpty(errorMessage)) {
       const message = errorMessage.join('\n');
-      logger.debug(`New cache error: ${errorMessage}`);
+      logger.debug(`New cache error: ${message}`);
       this.error = new Error(message);
     }
     this.cwd = _.get(props, 'cwd');
     logger.debug(`this.cwd: ${this.cwd}`);
+    if (this.cwd) {
+      fs.ensureDirSync(this.cwd);
+    }
+  }
+
+  private getCloudUrl(bucket: string, objectKey: string, prefix: string): string {
+    let url = `oss://${bucket}/`;
+    if (prefix) {
+      url += `${prefix}/`;
+    }
+    url += objectKey;
+    if (!_.endsWith(objectKey, '/')) {
+      url += '/';
+    }
+    return url;
   }
 
   run(): { 'cache-hit': boolean, error?: Error } {
@@ -86,72 +101,78 @@ export default class Cache {
       return { 'cache-hit': false, error: this.error };
     }
     if (this.createBucketName) {
-      this.logger.debug(`retry create bucket: ossutil mb oss://${this.createBucketName}; stdout:`);
-      const { stdout } = spawnSync(`ossutil mb oss://${this.createBucketName} ${this.commonSuffix}`, {
+      this.logger.debug(`Checking bucket exists: ossutil stat oss://${this.createBucketName}; stdout:`);
+      const statResponse = spawnSync(`ossutil stat oss://${this.createBucketName} ${this.commonSuffix}`, {
         timeout: 10000,
         encoding: 'utf8',
         shell: true,
       });
-      this.logger.debug(stdout);
+      this.logger.debug(statResponse.stdout);
+      if (_.includes(statResponse.stdout, 'Error:')) {
+        this.logger.debug(`retry create bucket: ossutil mb oss://${this.createBucketName}; stdout:`);
+        const mbResponse = spawnSync(`ossutil mb oss://${this.createBucketName} ${this.commonSuffix}`, {
+          timeout: 10000,
+          encoding: 'utf8',
+          shell: true,
+        });
+        this.logger.debug(mbResponse.stdout);
+      }
     }
-    // @ts-ignore
-    const { stdout, status } = spawnSync(`ossutil du ${this.cloudUrl} ${this.commonSuffix}`, {
+
+    const duResponse = spawnSync(`ossutil du ${this.cloudUrl} ${this.commonSuffix}`, {
       timeout: 10000,
       encoding: 'utf8',
       shell: true,
     });
-    this.logger.debug(`ossutild du response.status: ${status}; stdout:\n`);
-    this.logger.debug(stdout);
-    if (status === null || status !== 0) {
-      this.error = new Error(`ossutil du error: ${stdout}`);
+    this.logger.debug(`ossutild du response.status: ${duResponse.status}; stdout:\n`);
+    this.logger.debug(duResponse.stdout);
+    if (duResponse.status === null || duResponse.status !== 0) {
+      this.error = new Error(`ossutil du error`);
+      this.logger.error(`ossutil du error`);
       return { 'cache-hit': false, error: this.error };
     }
 
-    if (!_.includes(stdout, 'total object count: 0')) {
+    if (!_.includes(duResponse.stdout, 'total object count: 0')) {
       this.logger.debug('cache-hit: true');
       fs.ensureDirSync(this.cachePath);
-      try {
-        const cpResponse = spawnSync(`ossutil cp ${this.cloudUrl} ${this.cachePath} ${Cache.cpCommonParams.join(' ')} ${this.commonSuffix}`, {
+      const cpResponse = spawnSync(
+        `ossutil cp ${this.cloudUrl} ${this.cachePath} ${Cache.cpCommonParams.join(' ')} ${this.commonSuffix}`,
+        {
           encoding: 'utf8',
           shell: true,
           cwd: this.cwd,
-        });
-        this.logger.debug(`ossutild du response.status: ${cpResponse.status}; stdout:\n`);
-        this.logger.debug(cpResponse.stdout);
-        return { 'cache-hit': true };
-      } catch (ex) {
-        this.logger.debug(`ossutild cp erorr: ${ex}`);
-        this.logger.error(`Download cache failed, ${ex}`);
-        this.error = new Error('Download cache failed');
+        }
+      );
+      if (cpResponse.error) {
+        this.logger.error(`ossutild cp ${cpResponse.error}`);
+        return { 'cache-hit': false, error: cpResponse.error };
       }
+      this.logger.debug(`ossutild cp response.status: ${cpResponse.status}; stdout:\n`);
+      this.logger.debug(cpResponse.stdout);
+      return { 'cache-hit': true };
     }
     this.logger.debug('cache-hit: false');
     return { 'cache-hit': false, error: this.error };
   }
 
   postRun(cacheHit: boolean, cacheError: any): void {
-    if (cacheError) {
-      this.logger.info('Cache error, skipping');
-      return;
-    }
-    if (cacheHit) {
-      this.logger.info('Cache already exists, skipping put');
-      return;
-    }
-
-    this.logger.info('Cache not exists, strat push');
+    this.logger.debug(`Cache preRun error: ${cacheError || false}`);
+    this.logger.debug(`Cache already exists: ${cacheHit || false}`);
+    this.logger.info('Start push');
     fs.ensureDirSync(this.cachePath);
-    try {
-      const cpResponse = spawnSync(`pwd && ossutil cp ${this.cachePath} ${this.cloudUrl} ${Cache.cpCommonParams.join(' ')} ${this.commonSuffix}`, {
+    const cpResponse = spawnSync(
+      `pwd && ossutil cp ${this.cachePath} ${this.cloudUrl} ${Cache.cpCommonParams.join(' ')} ${this.commonSuffix}`,
+      {
         encoding: 'utf8',
         shell: true,
         cwd: this.cwd,
-      });
-      this.logger.debug(`ossutild du response.status: ${cpResponse.status}; stdout:\n`);
-      this.logger.debug(cpResponse.stdout);
-    } catch (ex) {
-      this.logger.debug(`ossutild cp erorr: ${ex}`);
-      this.logger.error('Download cache failed');
+      }
+    );
+    if (cpResponse.error) {
+      this.logger.error(`ossutild cp ${cpResponse.error}`);
+      return;
     }
+    this.logger.debug(`ossutild cp response.status: ${cpResponse.status}; stdout:\n`);
+    this.logger.debug(cpResponse.stdout);
   }
 }

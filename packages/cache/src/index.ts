@@ -1,5 +1,4 @@
-import { lodash as _, Logger, getInputs, getStepContext, getCredentials } from '@serverless-cd/core';
-import Joi from 'joi';
+import { lodash as _, Logger, getInputs, getStepContext } from '@serverless-cd/core';
 import Cache, { IProps, ICredentials } from './cache';
 
 interface ISchemaError {
@@ -12,45 +11,26 @@ const getCacheInputs = async (inputs: Record<string, any>, context: Record<strin
   const newInputs = getInputs(inputs, context) as Record<string, any>;
   logger.debug(`newInputs: ${JSON.stringify(newInputs)}`);
 
-  const Schema = Joi.object({
-    key: Joi.string().required(),
-    path: Joi.string().required(),
-    region: Joi.string(),
-    ossConfig: Joi.object({
-      bucket: Joi.string(),
-      internal: Joi.boolean(),
-    }),
-  });
-  
-  const { error } = Schema.validate(newInputs, { abortEarly: false, convert: false, allowUnknown: true });
-  if (error) {
-    logger.debug(`check input error: ${error}`);
-    return { error };
-  }
+  // 从context获取region（与打包后JS逻辑一致）
+  const currentRegion = _.get(context, 'inputs.currentRegion');
+  const region = _.get(context, 'inputs.ctx.data.cacheConfig.oss.regionId', currentRegion);
 
-  const credentials = await getCredentials(newInputs, context) as ICredentials;
-  const { error: credentialError } = Joi.object({
-    accountId: Joi.string().required(),
-    accessKeyId: Joi.string().required(),
-    accessKeySecret: Joi.string().required(),
-    securityToken: Joi.string(),
-  }).validate(credentials, { abortEarly: false, convert: false, allowUnknown: true });
-
-  if (credentialError) {
-    logger.debug(`get credentials error: ${credentialError}`);
-    return { error: credentialError };
-  }
-
-  const workerRunRegion = _.get(context, 'inputs.workerRunConfig.region');
-  const region = _.get(newInputs, 'region', workerRunRegion);
+  // 直接从context获取凭证（替代原getCredentials逻辑）
+  const credentials: ICredentials = {
+    accountId: _.get(context, 'inputs.sts.accountId') || _.get(context, 'inputs.uid'),
+    accessKeyId: _.get(context, 'inputs.sts.accessKeyId'),
+    accessKeySecret: _.get(context, 'inputs.sts.accessKeySecret'),
+    securityToken: _.get(context, 'inputs.sts.securityToken'),
+  };
 
   return {
     region,
-    cwd: _.get(context, 'cwd'),
+    cwd: _.get(context, 'cwd', process.cwd()),  // 添加process.cwd()兜底
     objectKey: _.get(newInputs, 'key', ''),
     cachePath: _.get(newInputs, 'path', ''),
-    bucket: _.get(newInputs, 'ossConfig.bucket', ''),
-    internal: _.get(newInputs, 'ossConfig.internal', workerRunRegion === region),
+    bucket: _.get(context, 'inputs.ctx.data.cacheConfig.oss.bucketName', ''), // bucket来源变更
+    prefix: _.get(context, 'inputs.ctx.data.cacheConfig.oss.prefix'), // 新增prefix字段
+    internal: currentRegion === region, // internal计算逻辑变更
     credentials,
   };
 }
