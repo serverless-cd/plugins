@@ -128,7 +128,7 @@ export default class Cache {
     this.logger.debug(duResponse.stdout);
     if (duResponse.status === null || duResponse.status !== 0) {
       this.error = new Error(`ossutil du error`);
-      this.logger.error(`ossutil du error`);
+      this.logger.error(`ossutil du error, ${duResponse.error}`);
       return { 'cache-hit': false, error: this.error };
     }
 
