@@ -12,3 +12,10 @@ export interface IConfig {
   ref?: string;
   commit?: string;
 }
+
+export interface ICredentials {
+  accountId: string;
+  accessKeyId: string;
+  accessKeySecret: string;
+  securityToken?: string;
+}

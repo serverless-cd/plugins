@@ -611,3 +611,36 @@ test('checkout for appcenter template v2', async () => {
   const res = await engine.start();
   expect(res.status).toBe('success');
 });
+
+test('checkout for oss source config', async () => {
+  fs.removeSync(exec_dir);
+  const steps = [
+    {
+      plugin,
+    },
+  ];
+  const engine = new Engine({
+    cwd: path.join(exec_dir, 'app-center'),
+    steps,
+    logConfig: { logPrefix, logLevel: 'DEBUG' },
+    inputs: {
+      scheduleRegion: 'cn-hangzhou',
+      sts: {
+        accessKeyId: "",
+        accessKeySecret: "",
+        // securityToken: "",
+      },
+      ctx: {
+        data: {
+          checkout: {
+              bucket: 'jingsu-test-upload',
+              object: 'captest/zipdir/start_flask.zip',
+              ossRegion: 'cn-hangzhou',
+          },
+        },
+      },
+    },
+  });
+  const res = await engine.start();
+  expect(res.status).toBe('success');
+});

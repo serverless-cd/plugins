@@ -1,7 +1,7 @@
 import { Logger, getInputs, lodash } from '@serverless-cd/core';
 import { stringify } from './utils';
 import Checkout from './checkout';
-import { IConfig } from './types';
+import { IConfig, ICredentials } from './types';
 import checkoutForAppCenter from './checkout-for-appcenter';
 const debug = require('@serverless-cd/debug')('serverless-cd:checkout');
 
@@ -35,11 +35,13 @@ export async function run(
   debug(`newInputs: ${stringify(newConfig)}`);
   debug(ctx ? 'appcenter checkout' : 'engine checkout');
 
+  const credentials: ICredentials = get(context, 'inputs.sts');
+  const region = get(ctx, 'ossRegion') || get(context, 'inputs.scheduleRegion');
   ctx
     ? await checkoutForAppCenter({
         ...newConfig,
         execDir: get(newConfig, 'execDir', get(context, 'cwd')),
-      })
+      }, credentials, region)
     : await new Checkout(newConfig).run();
   logger.info('End checkout plugin');
 }

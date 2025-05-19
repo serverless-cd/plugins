@@ -3,6 +3,8 @@ import simpleGit from 'simple-git';
 import execa from 'execa';
 import { stringify } from './utils';
 import path from 'path';
+import {ICredentials} from "./types";
+import decompress from 'decompress';
 const { get, includes } = lodash;
 const debug = require('@serverless-cd/debug')('serverless-cd:checkout');
 
@@ -35,7 +37,14 @@ interface ITemplateSourceConfig {
   logger?: Logger;
 }
 
-const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig | ITemplateSourceConfig) => {
+interface IOssConfig {
+  execDir: string;
+  bucket: string;
+  object: string;
+  logger?: Logger;
+}
+
+const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig | ITemplateSourceConfig | IOssConfig, credentials: ICredentials, region: string) => {
   const logger = config.logger || console;
   const { execDir } = config;
   debug(`config: ${stringify(config)}`);
@@ -50,6 +59,10 @@ const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig | ITemp
 
   if('templateUrl' in config) {
     return await downloadTemplateSource(config);
+  }
+
+  if('bucket' in config) {
+    return await downloadCodeFromOss(config, credentials, region);
   }
 };
 
@@ -192,5 +205,54 @@ const retry = async (func: () => Promise<void>, times: number, options: { logger
     }
   }
 }
+
+const downloadCodeFromOss = async (config: IOssConfig, credentials: ICredentials, region: string) => {
+  const logger = config.logger || console;
+  const { execDir, bucket, object } = config;
+  let endpoint = `https://oss-${region}.aliyuncs.com`;
+  if (region.endsWith(process.env.FC_REGION || 'unknown')) {
+    endpoint = `oss-${process.env.FC_REGION}-internal.aliyuncs.com`;
+  }
+  let saveCodeCmd = `ossutil cp -r oss://${bucket}/${object} ${execDir} --region ${region} -e ${endpoint} -i ${credentials.accessKeyId} -k ${credentials.accessKeySecret}`
+  if (credentials.securityToken) {
+    saveCodeCmd += ` -t ${credentials.securityToken}`
+  }
+  const isZipFile = async (filePath: string): Promise<boolean> => {
+    const buffer = await fs.promises.readFile(filePath, { encoding: null });
+    return buffer.readUInt32LE(0) === 0x04034b50;
+  };
+
+  const getFileNameFromPath = (path: string): string => {
+    const lastSlashIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    return path.substring(lastSlashIndex + 1);
+  };
+
+  try {
+    // download the code saved in oss
+    const subprocess = execa(saveCodeCmd, {
+      shell: true,
+      stripFinalNewline: false,
+      cwd: path.dirname(execDir),
+    });
+    subprocess.stdout?.pipe(process.stdout);
+    await subprocess;
+    // unzip when download file is zip type
+    if (object.endsWith('.zip')) {
+      const zipFileName = getFileNameFromPath(object);
+      if (await isZipFile(path.join(execDir, zipFileName))) {
+        logger.debug(`unzip ${zipFileName} to ${execDir}`);
+        await decompress(path.join(execDir, zipFileName), execDir);
+        logger.info(`unzip ${zipFileName} to ${execDir} finished`);
+        // delete the zip file
+        await fs.promises.unlink(path.join(execDir, zipFileName));
+        logger.info(`deleted ${zipFileName} from ${execDir}`);
+      }
+    }
+  } catch (err) {
+    logger.error(err);
+    throw err;
+  }
+}
+
 
 export default checkoutForAppCenter;
