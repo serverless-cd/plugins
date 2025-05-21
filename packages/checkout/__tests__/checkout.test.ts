@@ -9,6 +9,7 @@ const logPrefix = path.join(__dirname, 'logs');
 const plugin = path.join(__dirname, '..', 'src');
 const exec_dir = path.join(__dirname, '_temp');
 
+jest.setTimeout(20000);
 describe('仓库未初始化', () => {
   beforeAll(() => {
     fs.removeSync(exec_dir);
@@ -636,6 +637,38 @@ test('checkout for oss source config', async () => {
               bucket: 'jingsu-test-upload',
               object: 'captest/zipdir/start_flask.zip',
               ossRegion: 'cn-hangzhou',
+          },
+        },
+      },
+    },
+  });
+  const res = await engine.start();
+  expect(res.status).toBe('success');
+});
+
+test('checkout for gitee code repo', async () => {
+  fs.removeSync(exec_dir);
+  const steps = [
+    {
+      plugin,
+    },
+  ];
+  const engine = new Engine({
+    cwd: path.join(exec_dir, 'app-center'),
+    steps,
+    logConfig: { logPrefix },
+    inputs: {
+      ctx: {
+        data: {
+          checkout: {
+            branch: 'main',
+            commit: '2d6fea5acd68b1acc429ffefabcf931e23a62466',
+            message: 'Initialize by template start-springboot',
+            provider: 'gitee',
+            ref: '+2d6fea5acd68b1acc429ffefabcf931e23a62466:refs/remotes/origin/main',
+            remote: `https://sodawyx:51dbc5760c3a6ffeda7e33b09b915ee2@gitee.com/sodawyx/python-sse-hello-world-h3d2.git`,
+            token: `0e5f3d38fc051fe1809e49ff59190c30`,
+            userName: 'sodawyx',
           },
         },
       },

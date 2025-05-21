@@ -1,6 +1,6 @@
 {
   "name": "@serverless-cd/checkout",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Checkout a git repository.",
   "main": "./lib/index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "decompress": "^4.2.1",
     "execa": "^5.1.0",
     "flatted": "^3.2.7",
-    "simple-git": "^3.17.0"
+    "simple-git": "^3.27.0"
   },
   "inputs": {
     "ref": {
