@@ -21,6 +21,7 @@ interface IGitConfig {
   ref: string;
   branch?: string;
   commit?: string;
+  userName?: string;
   logger?: Logger;
 }
 
@@ -50,6 +51,10 @@ const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig | ITemp
   debug(`config: ${stringify(config)}`);
   fs.ensureDirSync(execDir);
   if ('provider' in config) {
+    // 临时解决git拉取gitee代码失败的问题
+    if (config.provider === 'gitee') {
+      return await downloadCodeFromGitee(config);
+    }
     return await gitFetch(config);
   }
 
@@ -140,6 +145,63 @@ const sInit = async (config: ITemplateConfig) => {
   return { template, parameters }
 }
 
+const downloadCodeFromGitee = async (config: IGitConfig) => {
+  const logger = config.logger || console;
+  const { execDir, remote, token, branch, commit, provider, ref, userName} = config;
+  if (!fs.existsSync(execDir)) {
+    throw new Error(`The execDir[${execDir}] does not exist`);
+  }
+  const repo = extractRepoFromUrl(remote);
+  let codeZipName = `${repo}-${commit}.zip`
+  let innerDirName = `${repo}-${commit}`
+  let downloadCmd = `curl -L "https://gitee.com/api/v5/repos/${userName}/${repo}/zipball?access_token=${token}&ref=${commit}" -o "${codeZipName}"`
+  function extractRepoFromUrl(remoteUrl: string): string | null {
+    const repoRegex = /\/([\w-]+)(\.git)?$/;
+    const match = remoteUrl.match(repoRegex);
+    if (match && match[1]) {
+      return match[1];
+    }
+    return "";
+  }
+
+  // download code zip from gitee
+  try {
+    const subprocess = execa(downloadCmd, {
+      shell: true,
+      stripFinalNewline: false,
+      cwd: execDir,
+    });
+    subprocess.stdout?.pipe(process.stdout);
+    await subprocess;
+
+    // Create a temporary directory for extracting
+    const tempDir = path.join(execDir, 'temp');
+    await fs.ensureDir(tempDir);
+
+    // unzip to the temporary directory
+    await decompress(path.join(execDir, codeZipName), tempDir);
+    logger.info(`Unzipped ${codeZipName} to temporary directory`);
+
+    // Move contents to execDir and clean up
+    const extractedDir = path.join(tempDir, innerDirName);
+    const extractedFiles = await fs.readdir(extractedDir);
+    for (const file of extractedFiles) {
+      await fs.move(path.join(extractedDir, file), path.join(execDir, file), { overwrite: true });
+    }
+
+    // Clean up temporary directory
+    await fs.remove(tempDir);
+    logger.info(`Moved contents from temporary directory to ${execDir}`);
+
+    // Delete the zip file
+    await fs.promises.unlink(path.join(execDir, codeZipName));
+    logger.info(`Deleted ${codeZipName} from ${execDir}`);
+  } catch (err) {
+    logger.error(err);
+    throw err;
+  }
+}
+
 const gitFetch = async (config: IGitConfig) => {
   const logger = config.logger || console;
   const { execDir, remote, token, branch, commit, provider, ref } = config;
@@ -217,10 +279,6 @@ const downloadCodeFromOss = async (config: IOssConfig, credentials: ICredentials
   if (credentials.securityToken) {
     saveCodeCmd += ` -t ${credentials.securityToken}`
   }
-  const isZipFile = async (filePath: string): Promise<boolean> => {
-    const buffer = await fs.promises.readFile(filePath, { encoding: null });
-    return buffer.readUInt32LE(0) === 0x04034b50;
-  };
 
   const getFileNameFromPath = (path: string): string => {
     const lastSlashIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
@@ -254,5 +312,9 @@ const downloadCodeFromOss = async (config: IOssConfig, credentials: ICredentials
   }
 }
 
+const isZipFile = async (filePath: string): Promise<boolean> => {
+  const buffer = await fs.promises.readFile(filePath, { encoding: null });
+  return buffer.readUInt32LE(0) === 0x04034b50;
+};
 
 export default checkoutForAppCenter;
