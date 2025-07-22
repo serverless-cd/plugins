@@ -667,7 +667,7 @@ test('checkout for gitee code repo', async () => {
             provider: 'gitee',
             ref: '+2d6fea5acd68b1acc429ffefabcf931e23a62466:refs/remotes/origin/main',
             remote: `https://sodawyx:51dbc5760c3a6ffeda7e33b09b915ee2@gitee.com/sodawyx/python-sse-hello-world-h3d2.git`,
-            token: `0e5f3d38fc051fe1809e49ff59190c30`,
+            token: `a62d273d0***********d5e0c6f0348`,
             userName: 'sodawyx',
           },
         },
