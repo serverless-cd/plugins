@@ -182,11 +182,22 @@ const downloadCodeFromGitee = async (config: IGitConfig) => {
     await decompress(path.join(execDir, codeZipName), tempDir);
     logger.info(`Unzipped ${codeZipName} to temporary directory`);
 
-    // Move contents to execDir and clean up
-    const extractedDir = path.join(tempDir, innerDirName);
-    const extractedFiles = await fs.readdir(extractedDir);
+    // detect innerDirName
+    const tempContents = await fs.readdir(tempDir, { withFileTypes: true });
+    // find the decompressed dir
+    const innerDirEntry = tempContents.find(
+        entry => entry.isDirectory() && !entry.name.startsWith('.')
+    );
+    if (!innerDirEntry) {
+      throw new Error('Failed to detect the main folder after decompressing the zip, please check your code repo.');
+    }
+    logger.info(`Detected innerDirName: ${innerDirEntry.name}`);
+    const innerDir = path.join(tempDir, innerDirEntry.name);
+
+    // move to execDir
+    const extractedFiles = await fs.readdir(innerDir);
     for (const file of extractedFiles) {
-      await fs.move(path.join(extractedDir, file), path.join(execDir, file), { overwrite: true });
+      await fs.move(path.join(innerDir, file), path.join(execDir, file), { overwrite: true });
     }
 
     // Clean up temporary directory
