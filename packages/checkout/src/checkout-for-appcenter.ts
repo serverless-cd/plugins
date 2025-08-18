@@ -189,7 +189,7 @@ const downloadCodeFromGitee = async (config: IGitConfig) => {
         entry => entry.isDirectory() && !entry.name.startsWith('.')
     );
     if (!innerDirEntry) {
-      throw new Error('Failed to detect the main folder after decompressing the zip, please check your code repo.');
+      throw new Error('The code repo is empty, failed to detect the main folder after decompressing the zip, please check your code repo.');
     }
     logger.info(`Detected innerDirName: ${innerDirEntry.name}`);
     const innerDir = path.join(tempDir, innerDirEntry.name);
