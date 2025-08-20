@@ -229,32 +229,16 @@ const gitFetch = async (config: IGitConfig) => {
   // step3: git fetch & git reset
   if (includes(GITLAB, provider) && branch && commit) { // fix 'git fetch' in old gitlab
     logger.info(`Git pull origin ${branch}`);
-    try {
-      await git.pull('origin', branch);
-    } catch (err) {
-      logger.error(get(err, 'message', '').replace(token, '********'));
-      if (get(err, 'message', '').indexOf(ERROR_PREFIX.SSL) !== -1) {
-        await retry(async () => {
-          await git.pull('origin', branch);
-        }, 3, { logger, token });
-      }
-    }
+    // pulling code from git with retry
+    await retryOnSSLError(async () => { await git.pull('origin', branch); }, 3, { logger, token });
 
     logger.info(`Git reset --hard ${commit}`);
     const response = await git.reset(['--hard', commit]);
     logger.info(response);
   } else {
     logger.info(`Git fetch --depth=1 origin ${ref}`);
-    try {
-      await git.fetch('origin', ref, { '--depth': '1' });
-    } catch (err) {
-      logger.error(get(err, 'message', '').replace(token, '********'));
-      if (get(err, 'message', '').indexOf(ERROR_PREFIX.SSL) !== -1) {
-        await retry(async () => {
-          await git.fetch('origin', ref, { '--depth': '1' });
-        }, 3, { logger, token });
-      }
-    }
+    // pulling code from git with retry
+    await retryOnSSLError(async () => { await git.fetch('origin', ref, { '--depth': '1' })}, 3, { logger, token });
 
     logger.info('Git reset --hard FETCH_HEAD');
     const response = await git.reset(['--hard', 'FETCH_HEAD']);
@@ -264,20 +248,40 @@ const gitFetch = async (config: IGitConfig) => {
   logger.info(get(res, 'latest.hash'));
 }
 
-const retry = async (func: () => Promise<void>, times: number, options: { logger: any; token: any; }) => {
-  const {logger, token} = options;
-  for (let i = 0; i < times; i++) {
+const retryOnSSLError = async (
+    func: () => Promise<void>,
+    maxRetries: number,
+    options: { logger: any; token: string }
+) => {
+  const { logger, token } = options;
+
+  for (let i = 0; i <= maxRetries; i++) {
     try {
-      logger.info(`Start retrying, times: ${i + 1} ...`);
+      if (i === 0) {
+        logger.info('executing pulling code from git operation...');
+      } else {
+        logger.info(`retry attempt ${i}/${maxRetries}...`);
+      }
+
       await func();
-      logger.info('Retry success');
-      break;
-    } catch (err) {
-      const msg = token ? get(err, 'message', '').replace(token, '********') : get(err, 'message', '');
-      logger.error(msg);
+      logger.info('pulling code from git succeeded.');
+      return; // Success, exit early
+    } catch (err: any) {
+      const errorMessage = get(err, 'message', '');
+      const sanitizedMessage = token ? errorMessage.replace(token, '********') : errorMessage;
+
+      logger.error(`Operation failed: ${sanitizedMessage}`);
+
+      // Only retry if it's an SSL error AND we haven't exhausted retries
+      if (i < maxRetries && errorMessage.includes(ERROR_PREFIX.SSL)) {
+        logger.warn('SSL error detected, retrying...');
+        continue;
+      }
+
+      throw new Error(`Git fetch operation failed: ${sanitizedMessage}`);
     }
   }
-}
+};
 
 const downloadCodeFromOss = async (config: IOssConfig, credentials: ICredentials, region: string) => {
   const logger = config.logger || console;
@@ -318,8 +322,11 @@ const downloadCodeFromOss = async (config: IOssConfig, credentials: ICredentials
       }
     }
   } catch (err) {
-    logger.error(err);
-    throw err;
+    logger.error('Failed to download code from OSS:', err);
+    throw new Error(
+        `Failed to download code from OSS: bucket=${bucket}, object=${object}, region=${region}, endpoint=${endpoint}. ` +
+        `Error: ${err instanceof Error ? err.message : JSON.stringify(err)}`
+    );
   }
 }
 
