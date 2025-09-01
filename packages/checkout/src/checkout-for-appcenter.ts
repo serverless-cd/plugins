@@ -51,10 +51,6 @@ const checkoutForAppCenter = async (config: IGitConfig | ITemplateConfig | ITemp
   debug(`config: ${stringify(config)}`);
   fs.ensureDirSync(execDir);
   if ('provider' in config) {
-    // 临时解决git拉取gitee代码失败的问题
-    if (config.provider === 'gitee') {
-      return await downloadCodeFromGitee(config);
-    }
     return await gitFetch(config);
   }
 
